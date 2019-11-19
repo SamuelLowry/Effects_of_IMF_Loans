@@ -1,0 +1,126 @@
+---
+title: "Prep Work"
+author: "Samuel Lowry"
+date: "11/18/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(janitor)
+library(reshape2)
+library(tidyverse)
+```
+
+```{r}
+# I read in the partially cleaned data attained from https://data.worldbank.org/country/angola?view=chart
+
+x <- read.csv("economic_data/angola_econ.csv")
+
+#I then deleted all years past 2015 as my WHO data only goes until 2015
+  
+x <- x[ -c(2, 19:22) ] %>% 
+  na.omit() 
+
+# The problem here is that once the data was imported, the years came up with x in front of them, so I renamed them all. 
+
+names(x) <- c("metric", 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015)
+
+# I then melted based upon the metric to get the year into a column instead of row. 
+
+x <- x %>% 
+  melt(id.vars = "metric") 
+
+#I gave the columns better names
+
+names(x) <- c("metric", "year", "value")
+
+#I then specified what everything was and added a column on where angola was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
+
+x <- x %>% 
+  transform(metric = as.character(metric)) %>%
+  transform(value = as.numeric(value)) %>% 
+  transform(year = as.numeric(year)) %>% 
+  transform(year = year + 1999) %>% 
+  mutate(sap = ifelse(year > 2008, 1, 0))
+```
+
+
+```{r}
+# data source: http://apps.who.int/gho/data/view.main.1360?lang=en and I got rid of the first row because it was for 2016, and we are just working with 2000-2015
+
+y <- read.csv("economic_data/adult_mortality.csv") 
+y = y[-1, ]
+
+#I then specified what everything was and added a column on where angola was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
+
+y <- y %>% 
+  transform(metric = as.character(metric)) %>%
+  transform(value = as.numeric(value)) %>% 
+  transform(year = as.numeric(year)) %>% 
+  mutate(sap = ifelse(year > 2008, 1, 0))
+```
+
+```{r}
+# data source: http://apps.who.int/gho/data/node.main.GHEDGGHEDGDPSHA2011?lang=en
+
+z <- read.csv("economic_data/gghe-d_gdp.csv") 
+
+# The problem here is that once the data was imported, the years came up with x in front of them, so I renamed them all.
+
+names(z) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+ 
+# I then melted based upon the metric to get the year into a column instead of row. 
+
+z <- z %>% 
+    melt(id.vars = "metric")
+
+#I gave the columns better names
+
+names(z) <- c("metric", "year", "value")
+
+#I then specified what everything was and added a column on where angola was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
+
+z <- z %>% 
+  transform(metric = as.character(metric)) %>%
+  transform(value = as.numeric(value)) %>% 
+  transform(year = as.numeric(year)) %>% 
+  transform(year = year + 1999) %>% 
+  mutate(sap = ifelse(year > 2008, 1, 0))
+```
+
+```{r}
+w <- read.csv("economic_data/gghe-d_pc.csv") 
+
+names(w) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+ 
+# I then melted based upon the metric to get the year into a column instead of row. 
+
+w <- w %>% 
+    melt(id.vars = "metric")
+
+#I gave the columns better names
+
+names(w) <- c("metric", "year", "value")
+
+#I then specified what everything was and added a column on where angola was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
+
+w <- w %>% 
+  transform(metric = as.character(metric)) %>%
+  transform(value = as.numeric(value)) %>% 
+  transform(year = as.numeric(year)) %>% 
+  transform(year = year + 1999) %>% 
+  mutate(sap = ifelse(year > 2008, 1, 0))
+```
+
+```{r}
+# I used this site in order to figure out rbind https://stackoverflow.com/questions/10358680/adding-a-one-dataframe-to-the-the-end-of-another-data-frame-in-r and then compiled all the needed data into 
+
+x <- rbind(x, y)
+
+x <- rbind(x, z)
+
+x <- rbind(x, w)
+```
+
