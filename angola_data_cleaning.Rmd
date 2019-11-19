@@ -42,8 +42,7 @@ x <- x %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) %>% 
-  mutate(sap = ifelse(year > 2008, 1, 0))
+  transform(year = year + 1999) 
 ```
 
 
@@ -58,8 +57,7 @@ y = y[-1, ]
 y <- y %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
-  transform(year = as.numeric(year)) %>% 
-  mutate(sap = ifelse(year > 2008, 1, 0))
+  transform(year = as.numeric(year)) 
 ```
 
 ```{r}
@@ -86,8 +84,7 @@ z <- z %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) %>% 
-  mutate(sap = ifelse(year > 2008, 1, 0))
+  transform(year = year + 1999) 
 ```
 
 ```{r}
@@ -110,8 +107,7 @@ w <- w %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) %>% 
-  mutate(sap = ifelse(year > 2008, 1, 0))
+  transform(year = year + 1999) 
 ```
 
 ```{r}
@@ -122,5 +118,11 @@ x <- rbind(x, y)
 x <- rbind(x, z)
 
 x <- rbind(x, w)
+
+
 ```
+
+```{r}
+t <- acast(x, year ~ metric) %>% 
+  mutate(sap = ifelse(year > 2008, 1, 0))
 
