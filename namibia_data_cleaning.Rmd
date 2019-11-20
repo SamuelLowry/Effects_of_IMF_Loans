@@ -1,7 +1,7 @@
 ---
-title: "Angola Data"
+title: "Namibia Data"
 author: "Samuel Lowry"
-date: "11/18/2019"
+date: "11/19/2019"
 output: html_document
 ---
 
@@ -13,33 +13,32 @@ library(reshape2)
 library(tidyverse)
 ```
 
-```{r angola_data}
-# I read in the partially cleaned data attained from https://data.worldbank.org/country/angola?view=chart
+```{r Namibia_data}
+# I read in the partially cleaned data attained from https://data.worldbank.org/country/namibia?view=chart
 
-angola_data <- read.csv("angola/angola_worldbank_data.csv")
+namibia_data <- read.csv("namibia/namibia_worldbank_data.csv")
 
-#I then deleted all years past 2015 as my WHO data only goes until 2015
-  
-angola_data <- angola_data[ -c(2, 19:22) ] %>% 
+#I then deleted all the NAs 
+
+namibia_data <- namibia_data%>% 
   na.omit() 
-
 
 # The problem here is that once the data was imported, the years came up with x in front of them, so I renamed them all. 
 
-names(angola_data) <- c("metric", 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015)
+names(namibia_data) <- c("metric", 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015)
 
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-angola_data <- angola_data %>% 
+namibia_data <- namibia_data %>% 
   melt(id.vars = "metric") 
 
 #I gave the columns better names
 
-names(angola_data) <- c("metric", "year", "value")
+names(namibia_data) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-angola_data <- angola_data %>% 
+namibia_data <- namibia_data %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
@@ -47,166 +46,171 @@ angola_data <- angola_data %>%
 ```
 
 
-```{r adult_mortality_angola}
+```{r adult_mortality_namibia}
 # data source: http://apps.who.int/gho/data/view.main.1360?lang=en and I got rid of the first row because it was for 2016, and we are just working with 2000-2015
 
-adult_mortality_angola <- read.csv("angola/adult_mortality_angola.csv") 
-adult_mortality_angola = adult_mortality_angola[-1, ]
+adult_mortality_namibia <- read.csv("namibia/adult_mortality_namibia.csv") 
+adult_mortality_namibia = adult_mortality_namibia[-1, ]
+
+#I renamed the years column to lowercase 
+
+names(adult_mortality_namibia) <- c("year", "metric", "value")
+
 
 #I then specified what everything was and formatted the year.
 
-adult_mortality_angola <- adult_mortality_angola %>% 
+adult_mortality_namibia <- adult_mortality_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) 
 ```
 
-```{r gdp_angola}
-# data source: http://apps.who.int/gho/data/node.main.GHEDGGHEDGDPSHA2011?lang=en
+```{r gdp_namibia}
+# data source: hhttp://apps.who.int/gho/data/node.main.GHEDGGHEDGDPSHA2011?lang=en
 
-gdp_angola <- read.csv("angola/gghe-d_gdp_angola.csv") 
+gdp_namibia <- read.csv("namibia/gghe-d_gdp_namibia.csv") 
 
 # The problem here is that once the data was imported, the years came up with x in front of them, so I renamed them all.
 
-names(gdp_angola) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+names(gdp_namibia) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
  
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-gdp_angola <- gdp_angola %>% 
+gdp_namibia <- gdp_namibia %>% 
     melt(id.vars = "metric")
 
 #I gave the columns better names
 
-names(gdp_angola) <- c("metric", "year", "value")
+names(gdp_namibia) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-gdp_angola <- gdp_angola %>% 
+gdp_namibia <- gdp_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
   transform(year = year + 1999) 
 ```
 
-```{r pc_angola}
-# data source: http://apps.who.int/gho/data/node.main.GHEDPVTDpcUSSHA2011?lang=en
+```{r pc_namibia}
+# data source: http://apps.who.int/gho/data/node.main.GHEDGGHEDpcUSSHA2011?lang=en
 
-pc_angola <- read.csv("angola/gghe-d_pc_angola.csv") 
+pc_namibia <- read.csv("namibia/gghe-d_pc_namibia.csv") 
 
-names(pc_angola) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+names(pc_namibia) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
  
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-pc_angola <- pc_angola %>% 
+pc_namibia <- pc_namibia %>% 
     melt(id.vars = "metric")
 
 #I gave the columns better names
 
-names(pc_angola) <- c("metric", "year", "value")
+names(pc_namibia) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-pc_angola <- pc_angola %>% 
+pc_namibia <- pc_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
   transform(year = year + 1999) 
 ```
 
-```{r external_angola}
+```{r external_namibia}
 # data source: http://apps.who.int/gho/data/node.main.GHEDEXTpcUSSHA2011?lang=en
 
-external_angola <- read.csv("angola/external_angola.csv") 
+external_namibia <- read.csv("namibia/external_namibia.csv") 
 
-names(external_angola) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+names(external_namibia) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
  
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-external_angola <- external_angola %>% 
+external_namibia <- external_namibia %>% 
     melt(id.vars = "metric")
 
 #I gave the columns better names
 
-names(external_angola) <- c("metric", "year", "value")
+names(external_namibia) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-external_angola <- external_angola %>% 
+external_namibia <- external_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
   transform(year = year + 1999) 
 ```
 
-```{r private_angola}
+```{r private_namibia}
 # data source: http://apps.who.int/gho/data/node.main.GHEDPVTDpcUSSHA2011?lang=en
 
-private_angola <- read.csv("angola/private_angola.csv") 
+private_namibia <- read.csv("namibia/private_namibia.csv") 
 
-names(private_angola) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+names(private_namibia) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
  
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-private_angola <- private_angola %>% 
+private_namibia <- private_namibia %>% 
     melt(id.vars = "metric")
 
 #I gave the columns better names
 
-names(private_angola) <- c("metric", "year", "value")
+names(private_namibia) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-private_angola <- private_angola %>% 
+private_namibia <- private_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
   transform(year = year + 1999) 
 ```
 
-```{r total_angola}
+```{r total_namibia}
 # data source: http://apps.who.int/gho/data/node.main.GHEDCHEpcUSSHA2011?lang=en
 
-total_angola <- read.csv("angola/total_angola.csv") 
+total_namibia <- read.csv("namibia/total_namibia.csv") 
 
-names(total_angola) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+names(total_namibia) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
  
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-total_angola <- total_angola %>% 
+total_namibia <- total_namibia %>% 
     melt(id.vars = "metric")
 
 #I gave the columns better names
 
-names(total_angola) <- c("metric", "year", "value")
+names(total_namibia) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-total_angola <- total_angola %>% 
+total_namibia <- total_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
   transform(year = year + 1999) 
 ```
 
-```{r pocket_angola}
-# data source:http://apps.who.int/gho/data/node.main.GHEDOOPpcUSSHA2011?lang=en
+```{r pocket_namibia}
+# data source: http://apps.who.int/gho/data/node.main.GHEDOOPpcUSSHA2011?lang=en
 
-pocket_angola <- read.csv("angola/pocket_angola.csv") 
+pocket_namibia <- read.csv("namibia/pocket_namibia.csv") 
 
-names(pocket_angola) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
+names(pocket_namibia) <- c("metric", 2015, 2014, 2013, 2012, 2011, 2010, 2009, 2008, 2007, 2006, 2005, 2004, 2003, 2002, 2001, 2000)
  
 # I then melted based upon the metric to get the year into a column instead of row. 
 
-pocket_angola <- pocket_angola %>% 
+pocket_namibia <- pocket_namibia %>% 
     melt(id.vars = "metric")
 
 #I gave the columns better names
 
-names(pocket_angola) <- c("metric", "year", "value")
+names(pocket_namibia) <- c("metric", "year", "value")
 
 #I then specified what everything was and formatted the year.
 
-pocket_angola <- pocket_angola %>% 
+pocket_namibia <- pocket_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
@@ -216,32 +220,31 @@ pocket_angola <- pocket_angola %>%
 ```{r bind}
 # I used this site in order to figure out rbind https://stackoverflow.com/questions/10358680/adding-a-one-dataframe-to-the-the-end-of-another-data-frame-in-r and then compiled all the needed data into 
 
-angola_data <- rbind(angola_data, adult_mortality_angola)
+namibia_data <- rbind(namibia_data, adult_mortality_namibia)
 
-angola_data <- rbind(angola_data, gdp_angola)
+namibia_data <- rbind(namibia_data, gdp_namibia)
 
-angola_data <- rbind(angola_data, pc_angola)
+namibia_data <- rbind(namibia_data, pc_namibia)
 
-angola_data <- rbind(angola_data, external_angola)
+namibia_data <- rbind(namibia_data, external_namibia)
 
-angola_data <- rbind(angola_data, private_angola)
+namibia_data <- rbind(namibia_data, private_namibia)
 
-angola_data <- rbind(angola_data, total_angola)
+namibia_data <- rbind(namibia_data, total_namibia)
 
-angola_data <- rbind(angola_data, pocket_angola)
+namibia_data <- rbind(namibia_data, pocket_namibia)
 
 ```
 
 ```{r workable data}
-#I then changed the groups of metrics into the columns. I added a column on where angola was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
+#I then changed the groups of metrics into the columns. I added a column on where namibia was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
 
-angola_data_flipped <- acast(angola_data, year ~ metric) 
+namibia_data_flipped <- acast(namibia_data, year ~ metric) 
 ```
 
 ```{r export data}
 # After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/
 
-
-write.csv(angola_data_flipped,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/angolaproject/angola/angola_compiled.csv", row.names = TRUE)
+write.csv(namibia_data_flipped,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/angolaproject/namibia/namibia_compiled.csv", row.names = TRUE)
 ```
 
