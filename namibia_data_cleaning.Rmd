@@ -42,7 +42,8 @@ namibia_data <- namibia_data %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = year + 1999) %>% 
+  arrange(year)
 ```
 
 
@@ -62,7 +63,8 @@ names(adult_mortality_namibia) <- c("year", "metric", "value")
 adult_mortality_namibia <- adult_mortality_namibia %>% 
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
-  transform(year = as.numeric(year)) 
+  transform(year = as.numeric(year)) %>% 
+  arrange(year)
 ```
 
 ```{r gdp_namibia}
@@ -89,7 +91,8 @@ gdp_namibia <- gdp_namibia %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = 2016 - year) %>% 
+  arrange(year)
 ```
 
 ```{r pc_namibia}
@@ -114,7 +117,8 @@ pc_namibia <- pc_namibia %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = 2016 - year) %>% 
+  arrange(year)
 ```
 
 ```{r external_namibia}
@@ -139,7 +143,8 @@ external_namibia <- external_namibia %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = 2016 - year) %>% 
+  arrange(year)
 ```
 
 ```{r private_namibia}
@@ -164,7 +169,8 @@ private_namibia <- private_namibia %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = 2016 - year) %>% 
+  arrange(year)
 ```
 
 ```{r total_namibia}
@@ -189,7 +195,8 @@ total_namibia <- total_namibia %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = 2016 - year) %>% 
+  arrange(year)
 ```
 
 ```{r pocket_namibia}
@@ -214,7 +221,8 @@ pocket_namibia <- pocket_namibia %>%
   transform(metric = as.character(metric)) %>%
   transform(value = as.numeric(value)) %>% 
   transform(year = as.numeric(year)) %>% 
-  transform(year = year + 1999) 
+  transform(year = 2016 - year) %>% 
+  arrange(year)
 ```
 
 ```{r bind}
@@ -240,11 +248,5 @@ namibia_data <- rbind(namibia_data, pocket_namibia)
 #I then changed the groups of metrics into the columns. I added a column on where namibia was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
 
 namibia_data_flipped <- acast(namibia_data, year ~ metric) 
-```
-
-```{r export data}
-# After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/
-
-write.csv(namibia_data_flipped,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/angolaproject/namibia/namibia_compiled.csv", row.names = TRUE)
 ```
 

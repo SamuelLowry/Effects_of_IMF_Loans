@@ -1,0 +1,74 @@
+---
+title: "Cleaned Data"
+author: "Samuel Lowry"
+date: "11/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+#I took the data compiled from the namibia and the angola rmds and gave them additional columns. One is country and the other specifies whether or not the year is one where Angola received IMF funding yet.
+
+namibia_data <- namibia_data %>% 
+  mutate(country = "Namibia") %>% 
+  mutate(SAP = ifelse(year > 2008, "Angola has received IMF money", "Angola has not received IMF money"))
+
+angola_data <- angola_data %>% 
+  mutate(country = "Angola") %>% 
+  mutate(SAP = ifelse(year > 2008, "Has received IMF money", "Has not received IMF money"))
+```
+
+```{r}
+# I then joined the two together with inner_join to delete all times where they did not match up. 
+combined <- inner_join(angola_data, namibia_data, by = c("metric", "year")) %>% 
+  arrange(metric) 
+```
+
+```{r}
+# After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/ . I then went through the data and deleted all that was not needed for my project.
+
+
+write.csv(complete,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/angolaproject/combined.csv", 
+          row.names = TRUE)
+```
+
+```{r}
+# I then took the newly cleaned data and put it back into r. 
+
+combined_trimmed <- read_csv("complete_trimmed.csv", col_types = 
+                               cols(
+                                metric = col_character(),
+                                year = col_double(),
+                                value.x = col_double(),
+                                country.x = col_character(),
+                                SAP.x = col_character(),
+                                value.y = col_double(),
+                                country.y = col_character(),
+                                SAP.y = col_character()
+                              )) 
+```
+
+```{r}
+# I then trimmed the combined data into their two respective countries and gave them proper labels. 
+
+complete_angola <- combined_trimmed %>% 
+  select(metric, year, value.x, country.x, SAP.x)
+
+names(complete_angola) <- c("Metric", "Year", "Value", "Country", "SAP")
+
+complete_namibia <- combined_trimmed %>% 
+  select(metric, year, value.y, country.y, SAP.y)
+
+names(complete_namibia) <- c("Metric", "Year", "Value", "Country", "SAP")
+```
+
+```{r}
+# I then bound the two together in order to have a central, gapminder-like dataframe. 
+
+complete_data <- rbind(complete_angola, complete_namibia)
+```
+
