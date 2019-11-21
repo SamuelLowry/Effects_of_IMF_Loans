@@ -29,17 +29,17 @@ combined <- inner_join(angola_data, namibia_data, by = c("metric", "year")) %>%
 ```
 
 ```{r}
-# After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/ . I then went through the data and deleted all that was not needed for my project.
+# After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/ . I then went through the data and deleted all that was not needed for my project. This will have to change based upon your filepath!
 
 
-write.csv(complete,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/angolaproject/combined.csv", 
+write.csv(combined,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/gov_1005_final_project/combined_data/combined_untrimmed.csv", 
           row.names = TRUE)
 ```
 
 ```{r}
-# I then took the newly cleaned data and put it back into r. 
+# I then took the newly cleaned data and put it back into r. After downloading it as a csv and then putting it into the combined_data folder with combined_trimmed as the name. 
 
-combined_trimmed <- read_csv("complete_trimmed.csv", col_types = 
+combined_trimmed <- read_csv("combined_data/combined_trimmed.csv", col_types = 
                                cols(
                                 metric = col_character(),
                                 year = col_double(),
