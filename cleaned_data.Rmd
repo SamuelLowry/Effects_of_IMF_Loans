@@ -29,6 +29,28 @@ combined <- inner_join(angola_data, namibia_data, by = c("metric", "year")) %>%
 ```
 
 ```{r}
+# I then trimmed the combined data into their two respective countries and gave them proper labels. 
+
+complete_angola_untrimmed <- combined %>% 
+  select(metric, year, value.x, country.x, SAP.x)
+
+names(complete_angola_untrimmed) <- c("Metric", "Year", "Value", "Country", "SAP")
+
+complete_namibia_untrimmed <- combined %>% 
+  select(metric, year, value.y, country.y, SAP.y)
+
+names(complete_namibia_untrimmed) <- c("Metric", "Year", "Value", "Country", "SAP")
+```
+
+```{r}
+# I then bound the two together in order to have a central, gapminder-like dataframe. 
+
+complete_data_untrimmed <- rbind(complete_angola_untrimmed, complete_namibia_untrimmed)
+
+saveRDS(object = complete_data_untrimmed, file = "shiny_roughdraft/complete_data_untrimmed.rds")
+```
+
+```{r}
 # After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/ . I then went through the data and deleted all that was not needed for my project. This will have to change based upon your filepath!
 
 
@@ -70,5 +92,15 @@ names(complete_namibia) <- c("Metric", "Year", "Value", "Country", "SAP")
 # I then bound the two together in order to have a central, gapminder-like dataframe. 
 
 complete_data <- rbind(complete_angola, complete_namibia)
+
+saveRDS(object = complete_data,file = "shiny_roughdraft/complete_data.rds")
 ```
+
+```{r workable data}
+#I then changed the groups of metrics into the columns. I added a column on where namibia was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
+
+namibia_data_flipped <- acast(namibia_data, year ~ metric) 
+```
+
+
 

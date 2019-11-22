@@ -1,0 +1,71 @@
+---
+title: "Plots"
+author: "Samuel Lowry"
+date: "11/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+
+```{r}
+complete_data_untrimmed %>% 
+  filter(Metric == "Access to clean fuels and technologies for cooking (% of population)") %>% 
+ggplot(aes(x = Year, y = Value, color = SAP)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~ Country) +
+  labs(title = "Access to clean fuels and technologies for cooking (% of population)",
+       y = "Percent of Population",
+       color = "Structural Adjustment Program")
+```
+
+
+```{r}
+rough_draft_regression_data <- complete_data %>% 
+  filter(Metric == "Domestic general government health expenditure (GGHE-D) per capita in US$ (WHO)") %>% 
+  filter(Year > 2008)
+
+# Create the model
+rough_draft_model <- lm(formula = Value ~ Country, data = rough_draft_regression_data)
+
+# Create the base plot
+ggplot(rough_draft_regression_data, aes(Country, Value))+
+  geom_point() +
+# Add the line using the fortified fit data, plotting the x vs. the fitted values
+  geom_line(data = fortify(rough_draft_model), aes(x = Country, y = .fitted))
+```
+
+
+```{r}
+
+library(lsmeans)
+
+rough_draft_model <- lm(Value ~ SAP*Country, data = rough_draft_regression_data, family = "binomial")
+anova(rough_draft_model)
+
+# Obtain slopes
+rough_draft_model$coefficients
+
+rough_draft_model_slopes <- lstrends("Country", var="SAP", data = rough_draft_model)
+
+
+# Compare slopes
+pairs(rough_draft_model_slopes)
+
+```
+
+```{r}
+regression <- complete_data %>% 
+  group_by(Metric) %>% 
+  nest() %>% 
+  mutate(models = map(data, ~ lm(Value ~ SAP, data = .x))) %>% 
+  mutate(coefficients = map(models, ~ coef(.x))) %>% 
+  mutate(slope ~ map_dbl(coefficients, ~ pluck(.x, "coefficients")))
+```
+
+
+

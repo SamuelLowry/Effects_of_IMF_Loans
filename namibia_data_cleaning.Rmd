@@ -244,9 +244,5 @@ namibia_data <- rbind(namibia_data, pocket_namibia)
 
 ```
 
-```{r workable data}
-#I then changed the groups of metrics into the columns. I added a column on where namibia was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
 
-namibia_data_flipped <- acast(namibia_data, year ~ metric) 
-```
 
