@@ -1,0 +1,12 @@
+name: shiny_roughdraft
+title: shiny_roughdraft
+username:
+account: samuellowry
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1524451
+bundleId: 2617058
+url: https://samuellowry.shinyapps.io/shiny_roughdraft/
+when: 1574718201.98826
+asMultiple: FALSE
+asStatic: FALSE

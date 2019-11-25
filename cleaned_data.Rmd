@@ -15,11 +15,11 @@ library(tidyverse)
 
 namibia_data <- namibia_data %>% 
   mutate(country = "Namibia") %>% 
-  mutate(SAP = ifelse(year > 2008, "Angola has received IMF money", "Angola has not received IMF money"))
+  mutate(SAP = ifelse(year > 2009, "Angola has received IMF money", "Angola has not received IMF money"))
 
 angola_data <- angola_data %>% 
   mutate(country = "Angola") %>% 
-  mutate(SAP = ifelse(year > 2008, "Has received IMF money", "Has not received IMF money"))
+  mutate(SAP = ifelse(year > 2009, "Has received IMF money", "Has not received IMF money"))
 ```
 
 ```{r}
@@ -75,14 +75,16 @@ combined_trimmed <- read_csv("combined_data/combined_trimmed.csv", col_types =
 ```
 
 ```{r}
-# I then trimmed the combined data into their two respective countries and gave them proper labels. 
+# I then trimmed the combined data into their two respective countries and gave them proper labels. I also changed the years because the 2010 Angola budget was the first one created with IMF loans as the loans took effect in late 2009. 
 
 complete_angola <- combined_trimmed %>% 
+  mutate(SAP.x = ifelse(year > 2009, "Has received IMF money", "Has not received IMF money")) %>% 
   select(metric, year, value.x, country.x, SAP.x)
 
 names(complete_angola) <- c("Metric", "Year", "Value", "Country", "SAP")
 
 complete_namibia <- combined_trimmed %>% 
+  mutate(SAP.y = ifelse(year > 2009, "Angola has received IMF money", "Angola has not received IMF money")) %>% 
   select(metric, year, value.y, country.y, SAP.y)
 
 names(complete_namibia) <- c("Metric", "Year", "Value", "Country", "SAP")

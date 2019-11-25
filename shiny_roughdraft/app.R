@@ -1,6 +1,7 @@
-library(shiny)
+
 library(shinythemes)
 library(tidyverse)
+library(shiny)
 
 # I copied in the needed data
 
@@ -10,14 +11,18 @@ complete_data_untrimmed <- readRDS("complete_data_untrimmed.rds")
 
 #I used the navbar template and then defined all the panels
 
-ui <- navbarPage("Effects of IMF Structural Adjustment Programs on Angola",
-                 theme = shinytheme("united"),
+ui <- navbarPage(theme = shinytheme("united"), "Effects of IMF Structural Adjustment Programs on Angola",
                  tabsetPanel(
-                     tabPanel("About", p("This is the rough draft of Sam Lowry's final project for GOV 1005 at Harvard College. Here is a link to my github repo: https://github.com/SamuelLowry/gov_1005_final_project")),
-                     tabPanel("Context", p("Here I will give background as to the scholarly disputes around IMF loans and how they affect the spending of recipient countries. The basic idea is using Namibia as a control in comparison to Angola. Angola received IMF loans starting in 2009. Namibia has never received them.")),
-                     tabPanel("Selection Bias",p("Here, there will be graphics and context information around selection bias. I will compare the economies and history of the two countries while also acknowledging the shortcomings of the comparison."), plotOutput("selectionbias")),
-    
-    
+                     tabPanel("About",
+                              titlePanel("About"),
+                              p("This is the rough draft of Sam Lowry's final project for GOV 1005 at Harvard College. Here is a link to my github repo: https://github.com/SamuelLowry/gov_1005_final_project")),
+                     tabPanel("Context",
+                              titlePanel("Context"),
+                              p("Here I will give background as to the scholarly disputes around IMF loans and how they affect the spending of recipient countries. The basic idea is using Namibia as a control in comparison to Angola. Angola received IMF loans starting in 2009. Namibia has never received them.")),
+                     tabPanel("Selection Bias",
+                              titlePanel("Selection Bias"),
+                              p("Here, there will be graphics and context information around selection bias. I will compare the economies and history of the two countries while also acknowledging the shortcomings of the comparison."), plotOutput("selectionbias")),
+                     
 #I then created the dropdown menu in the ui
     
     tabPanel("Interactive Comparison with Regression: Angola and Namibia",
@@ -40,10 +45,7 @@ ui <- navbarPage("Effects of IMF Structural Adjustment Programs on Angola",
                  
                  mainPanel(
                      plotOutput("dropdown")
-                 )
-             )
-    ))
-             )
+                 )))))
 
 # Define the server
 
@@ -51,9 +53,6 @@ server <- function(input, output) {
     
     #library needed
     
-    library(tidyverse)
-    
-
     
    #specified reactive drop down based on metric
     
@@ -99,4 +98,4 @@ server <- function(input, output) {
 }
 
 # Run the application 
-shinyApp(ui = ui, server = server)
+shinyApp(ui, server)
