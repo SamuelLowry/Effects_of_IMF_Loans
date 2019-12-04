@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(broom)
 library(tidyverse)
 ```
 
@@ -67,5 +68,15 @@ regression <- complete_data %>%
   mutate(slope ~ map_dbl(coefficients, ~ pluck(.x, "coefficients")))
 ```
 
-
+```{r}
+regression <- complete_data_untrimmed %>% 
+group_by(Metric) %>%
+  nest() %>%
+  mutate(models = map(data, ~lm(Value ~ SAP, data = .x))) %>%
+  mutate(coefs = map(models, ~coef(.x))) %>%
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
+  mutate(glance = map(models, ~glance(.x))) %>%
+  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) 
+```
 

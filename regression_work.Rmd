@@ -1,0 +1,200 @@
+---
+title: "Regression"
+author: "Samuel Lowry"
+date: "12/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(broom)
+library(moderndive)
+library(purrr)
+library(tidyverse)
+```
+
+
+```{r}
+regression_angola <- complete_data_untrimmed %>%
+  filter(Country == "Angola") %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(anova_p_value = map(data, ~anova(lm(Value ~ SAP, data = .x))$"Pr(>F)"[1])) %>% 
+  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
+  select(Metric, anova_p_value) 
+
+significant_angola <- regression_angola %>% 
+  filter(anova_p_value <= .05)
+
+not_significant_angola <- regression_angola %>% 
+  filter(anova_p_value >= .05)
+
+regression_namibia <- complete_data_untrimmed %>%
+  filter(Country == "Namibia") %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(anova_p_value = map(data, ~anova(lm(Value ~ SAP, data = .x))$"Pr(>F)"[1])) %>% 
+  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
+  select(Metric, anova_p_value) 
+
+significant_namibia <- regression_namibia %>% 
+  filter(anova_p_value <= .05)
+
+not_significant_namibia <- regression_namibia %>% 
+  filter(anova_p_value >= .05)
+```
+
+```{r}
+both_significant <- inner_join(significant_angola, significant_namibia, by = "Metric")
+
+both_not_significant <- inner_join(not_significant_angola, not_significant_namibia, by = "Metric") %>% 
+  select(Metric)
+
+special_angola <- inner_join(significant_angola, not_significant_namibia, by = "Metric") %>% 
+  select(Metric)
+
+special_namibia <- inner_join(significant_namibia, not_significant_angola, by = "Metric") %>% 
+  select(Metric)
+```
+
+```{r}
+special_angola <- left_join(special_angola, complete_data_untrimmed, by = "Metric")
+
+special_namibia <- left_join(special_namibia, complete_data_untrimmed, by = "Metric")
+
+both_significant <- left_join(both_significant, complete_data_untrimmed, by = "Metric")
+
+both_not_significant <- left_join(both_not_significant, complete_data_untrimmed, by = "Metric") 
+
+```
+
+```{r}
+saveRDS(object = special_angola, file = "shiny_demoday/special_angola.rds")
+
+saveRDS(object = special_namibia, file = "shiny_demoday/special_namibia.rds")
+
+saveRDS(object = both_significant, file = "shiny_demoday/both_significant.rds")
+
+saveRDS(object = both_not_significant, file = "shiny_demoday/both_not_significant.rds")
+```
+
+
+
+
+
+
+
+
+
+
+```{r}
+#all work here and below is scratch work
+
+angola_regression <- complete_data_untrimmed %>%
+  filter(Country == "Angola") %>% 
+  mutate(SAP = ifelse(SAP == "Has received IMF money", 1, 0)) %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(models = map(data, ~lm(Value ~ SAP, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x))) %>%
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
+  mutate(glance = map(models, ~glance(.x))) %>%
+  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
+  mutate(Country = 1)
+```
+
+```{r}
+namibia_regression <- complete_data_untrimmed %>%
+  filter(Country == "Namibia") %>% 
+  mutate(SAP = ifelse(SAP == "Angola has received IMF money", 1, 0)) %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(models = map(data, ~lm(Value ~ SAP, data = .x))) %>% 
+  mutate(coefs = map(models, ~coef(.x))) %>%
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
+  mutate(glance = map(models, ~glance(.x))) %>%
+  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
+  mutate(Country = 0)
+```
+
+```{r}
+regression <- complete_data_untrimmed %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(anova = map(data, ~aov(Value ~ SAP, data = .x))) %>% 
+  mutate(glance = map(anova, ~glance(.x))) 
+
+%>%
+  mutate(p-value = map_dbl(glance, ~pluck(.x, "Pr(>F)1")))
+```
+
+```{r}
+regression <- rbind(angola_regression, namibia_regression)
+
+library(dotwhisker)
+
+regression <- complete_data_untrimmed %>%
+  filter(Year > 2009) %>%
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(anova = map(data, ~Anova(lm(Value ~ Country, data = .x), type = "II")))
+
+%>% 
+  mutate(anova = anova(lm, type = "II"))
+
+  filter(anova_p_value < .05)
+
+
+%>% 
+  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
+  select(Metric, anova_p_value) 
+
+
+
+
+  
+
+
+
+
+regression_namibia <- complete_data_untrimmed %>%
+  filter(Country == "Namibia") %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(anova = map(data, ~anova(lm(Value ~ SAP, data = .x))$"Pr(>F)"[1])) 
+
+
+library(dotwhisker)
+
+yes <- complete_data_untrimmed %>% 
+  filter(Year > 2009) %>%
+  filter(Country == "Angola") %>% 
+  filter(Metric == "Domestic general government health expenditure per capita (current US$)")
+
+yes <- lm(Value ~ Year, yes)
+
+dwplot(yes)
+
+yes <- tidy(yes, conf.int = TRUE)
+
+ggplot(yes, aes(term, estimate))+
+  geom_point()+
+  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
+  labs(title = "Coefficients of a linear regression model")
+
+aov(Value ~ SAP, data = yes)
+
+unlist(summary(aov(Value ~ SAP, data = yes)))
+
+
+%>% 
+  mutate(coefs = map(models, ~coef(.x))) %>%
+  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
+  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
+  mutate(glance = map(models, ~glance(.x))) %>%
+  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
+  mutate(Country = "Namibia")
+```
+
