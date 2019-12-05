@@ -13,8 +13,32 @@ library(purrr)
 library(tidyverse)
 ```
 
+```{r}
+regression <- complete_data_untrimmed %>%
+  mutate(SAP = ifelse(Year > 2009, 1, 0)) %>% 
+  group_by(Metric) %>%
+  nest() %>% 
+  mutate(models = map(data, ~lm(Value ~ Year + SAP + Country + Year*Country + SAP*Country + Year*SAP, data = .x)))
+
+access_data <- complete_data_untrimmed %>%
+  mutate(SAP = ifelse(Year > 2009, 1, 0)) %>% 
+  filter(Metric == "Access to clean fuels and technologies for cooking (% of population)")
+
+model <- lm(Value ~ Year + SAP + Country + Year*Country + SAP*Country + Year*SAP, access_data)
+
+cbind(access_data, predict(model, access_data))
+         
+         %>% 
+  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
+  select(Metric, anova_p_value) 
+
+
+```
+
 
 ```{r}
+#Below I ran ANOVA regressions to tell the difference between the groups!
+
 regression_angola <- complete_data_untrimmed %>%
   filter(Country == "Angola") %>% 
   group_by(Metric) %>%
@@ -45,6 +69,8 @@ not_significant_namibia <- regression_namibia %>%
 ```
 
 ```{r}
+#Then I compiled the data
+
 both_significant <- inner_join(significant_angola, significant_namibia, by = "Metric")
 
 both_not_significant <- inner_join(not_significant_angola, not_significant_namibia, by = "Metric") %>% 
@@ -58,6 +84,8 @@ special_namibia <- inner_join(significant_namibia, not_significant_angola, by = 
 ```
 
 ```{r}
+#got certain needed groups together
+
 special_angola <- left_join(special_angola, complete_data_untrimmed, by = "Metric")
 
 special_namibia <- left_join(special_namibia, complete_data_untrimmed, by = "Metric")
@@ -69,6 +97,8 @@ both_not_significant <- left_join(both_not_significant, complete_data_untrimmed,
 ```
 
 ```{r}
+#saved it to RDS
+
 saveRDS(object = special_angola, file = "shiny_demoday/special_angola.rds")
 
 saveRDS(object = special_namibia, file = "shiny_demoday/special_namibia.rds")
@@ -78,13 +108,22 @@ saveRDS(object = both_significant, file = "shiny_demoday/both_significant.rds")
 saveRDS(object = both_not_significant, file = "shiny_demoday/both_not_significant.rds")
 ```
 
+```{r}
+yes <- complete_data_untrimmed %>% 
+  filter(Metric == "Domestic general government health expenditure per capita (current US$)") %>% 
+  mutate(SAP = as.integer(ifelse(Year > 2009, 1, 0)))
 
-
-
-
-
-
-
+ yes %>% 
+      ggplot(aes(x = SAP, y = Value, color = SAP)) +
+      geom_jitter() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Domestic general government health expenditure per capita (current US$)",
+           y = "In Current US$",
+           color = "Structural Adjustment Program")
+ 
+ summary(glm(Value ~ SAP, data = yes, family = "binomial"))
+```
 
 
 ```{r}
@@ -197,4 +236,9 @@ unlist(summary(aov(Value ~ SAP, data = yes)))
   mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
   mutate(Country = "Namibia")
 ```
+
+```{r}
+
+```
+
 
