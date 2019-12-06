@@ -6,15 +6,9 @@ library(shiny)
 
 complete_data <- readRDS("complete_data.rds")
 
-complete_data_untrimmed <- readRDS("complete_data_untrimmed.rds")
+complete_data_binary <- readRDS("complete_data_binary.rds")
 
-special_angola <- readRDS("special_angola.rds")
-
-special_namibia <- readRDS("special_namibia.rds")
-
-both_significant <- readRDS("both_significant.rds")
-
-both_not_significant <- readRDS("both_not_significant.rds")
+significant_regression <- readRDS("significant_regression.rds")
 
 
 #I used the navbar template and then defined all the panels
@@ -24,18 +18,18 @@ ui <- navbarPage(theme = shinytheme("united"), "Effects of IMF Structural Adjust
                    
                    #I then created the dropdown menu in the ui
                    
-                   tabPanel("Interactive Comparison with Regression: Angola and Namibia",
+                   tabPanel("Interactive Comparison: Angola and Namibia",
                             
                             # Application title
                             
-                            titlePanel("Interactive Comparison with Regression: Angola and Namibia"),
+                            titlePanel("Interactive Comparison: Angola and Namibia"),
                             
                             #Select a single, unique metric by consulting the code found here https://github.com/diegomartinez1221/baseball_aging_curve/blob/master/Baseball_Aging_Curve/app.R
                             
                             sidebarLayout(
                               sidebarPanel(
                                 selectInput("Metric",label = strong("Metric"),
-                                            choices = unique(complete_data_untrimmed$Metric),
+                                            choices = unique(complete_data$Metric),
                                             selected = "Adjusted savings: education expenditure (% of GNI)",
                                             multiple = FALSE
                                 )),
@@ -80,7 +74,7 @@ server <- function(input, output) {
 
   #specified reactive drop down based on metric
   
-  subset<-reactive({complete_data_untrimmed %>% filter(Metric %in%input$Metric)})
+  subset<-reactive({complete_data %>% filter(Metric %in%input$Metric)})
   
   
   output$dropdown <- renderPlot({
@@ -108,34 +102,12 @@ server <- function(input, output) {
     tagList("Link to Code:", url)
   })
   
-  #created a second drop down menu
-  
-  subset_sig<-reactive({both_not_significant %>% filter(Metric %in%input$Metric)})
-  
-  
-  output$significant <- renderPlot({
-    
-    # creates plot from groups of metrics
-    
-    ggplot(subset_sig(), aes(x=subset_sig()$Year, y=subset_sig()$Value, color = subset_sig()$SAP)) +
-      geom_point() +
-      facet_wrap(~ Country) +
-      
-      #created linear regression 
-      
-      geom_smooth(method = "lm", se = FALSE) +
-      labs(x = "Year",
-           y = "Value Based Upon Metric",
-           title = "World Bank and World Health Organization Data Where Neither Countries Experienced Significant Change",
-           color = "Structural Adjustment Program")
-  }
-  )
   
   output$selectionbias <- renderPlot({
     
     #showed an example of a comparison to account for selection bias
     
-    complete_data_untrimmed %>% 
+    complete_data %>% 
       filter(Metric == "GDP growth (annual %)") %>% 
       ggplot(aes(x = Year, y = Value, color = SAP)) +
       geom_point() +
@@ -151,7 +123,7 @@ server <- function(input, output) {
     
     #showed an example of a comparison to account for angolan signifcance 
     
-    complete_data_untrimmed %>% 
+    complete_data %>% 
       filter(Metric == "Taxes on income, profits and capital gains (% of revenue)") %>% 
       ggplot(aes(x = Year, y = Value, color = SAP)) +
       geom_point() +

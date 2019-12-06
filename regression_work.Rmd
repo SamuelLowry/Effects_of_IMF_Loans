@@ -10,235 +10,452 @@ knitr::opts_chunk$set(echo = TRUE)
 library(broom)
 library(moderndive)
 library(purrr)
+library(gt)
 library(tidyverse)
 ```
 
 ```{r}
-regression <- complete_data_untrimmed %>%
-  mutate(SAP = ifelse(Year > 2009, 1, 0)) %>% 
+#Run cleaned data rmd before this! And then namibia and angola data cleaning rmds before that!
+
+#Using the complete binary data that had been trimmed from the cleaned_data.rmd in order to run a regression in order to find the effect of the IMF loans while adjusting for country and year. 
+
+#I then also pulled out the SAP coefficient as well as the p value in order to show significance. 
+
+regression <- complete_data_binary %>%
   group_by(Metric) %>%
   nest() %>% 
-  mutate(models = map(data, ~lm(Value ~ Year + SAP + Country + Year*Country + SAP*Country + Year*SAP, data = .x)))
-
-access_data <- complete_data_untrimmed %>%
-  mutate(SAP = ifelse(Year > 2009, 1, 0)) %>% 
-  filter(Metric == "Access to clean fuels and technologies for cooking (% of population)")
-
-model <- lm(Value ~ Year + SAP + Country + Year*Country + SAP*Country + Year*SAP, access_data)
-
-cbind(access_data, predict(model, access_data))
-         
-         %>% 
-  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
-  select(Metric, anova_p_value) 
-
-
-```
-
-
-```{r}
-#Below I ran ANOVA regressions to tell the difference between the groups!
-
-regression_angola <- complete_data_untrimmed %>%
-  filter(Country == "Angola") %>% 
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(anova_p_value = map(data, ~anova(lm(Value ~ SAP, data = .x))$"Pr(>F)"[1])) %>% 
-  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
-  select(Metric, anova_p_value) 
-
-significant_angola <- regression_angola %>% 
-  filter(anova_p_value <= .05)
-
-not_significant_angola <- regression_angola %>% 
-  filter(anova_p_value >= .05)
-
-regression_namibia <- complete_data_untrimmed %>%
-  filter(Country == "Namibia") %>% 
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(anova_p_value = map(data, ~anova(lm(Value ~ SAP, data = .x))$"Pr(>F)"[1])) %>% 
-  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
-  select(Metric, anova_p_value) 
-
-significant_namibia <- regression_namibia %>% 
-  filter(anova_p_value <= .05)
-
-not_significant_namibia <- regression_namibia %>% 
-  filter(anova_p_value >= .05)
+  mutate(models = map(data, ~tidy(lm(Value ~ Year + SAP + Country, data = .x)))) %>% 
+  mutate(SAP_Coef = map(data, ~tidy(lm(Value ~ Year + SAP + Country, data = .x))$"estimate"[3])) %>% 
+  mutate(SAP_Coef = as.numeric(SAP_Coef)) %>% 
+  mutate(p_value = map(data, ~tidy(lm(Value ~ Year + SAP + Country, data = .x))$"p.value"[3])) %>% 
+  mutate(p_value = as.numeric(p_value))
 ```
 
 ```{r}
-#Then I compiled the data
+#I shrunk the dataset down to only metrics that were statistically significant. 
 
-both_significant <- inner_join(significant_angola, significant_namibia, by = "Metric")
+significant_regression <- regression %>% 
+  filter(p_value <= .05)
 
-both_not_significant <- inner_join(not_significant_angola, not_significant_namibia, by = "Metric") %>% 
-  select(Metric)
 
-special_angola <- inner_join(significant_angola, not_significant_namibia, by = "Metric") %>% 
-  select(Metric)
+#I saved them to this RDS for work in my shiny app.
 
-special_namibia <- inner_join(significant_namibia, not_significant_angola, by = "Metric") %>% 
-  select(Metric)
+saveRDS(object = significant_regression,file = "shiny_demoday/significant_regression.rds")
 ```
 
-```{r}
-#got certain needed groups together
+```{r reg_health_expend_percap}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code. 
+# I ignored all of the `cols` is now required warnings because they had no affect on the data. 
 
-special_angola <- left_join(special_angola, complete_data_untrimmed, by = "Metric")
+#Current health expenditure (WHO) per capita in US$		
+reg_health_expend_percap <- significant_regression[14, 3] %>% 
+  unnest()
 
-special_namibia <- left_join(special_namibia, complete_data_untrimmed, by = "Metric")
+#I bolded the SAP coefficient 
+gt(reg_health_expend_percap) %>% 
+   tab_header(title = "Current health expenditure per capita in US$") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
 
-both_significant <- left_join(both_significant, complete_data_untrimmed, by = "Metric")
-
-both_not_significant <- left_join(both_not_significant, complete_data_untrimmed, by = "Metric") 
-
-```
-
-```{r}
-#saved it to RDS
-
-saveRDS(object = special_angola, file = "shiny_demoday/special_angola.rds")
-
-saveRDS(object = special_namibia, file = "shiny_demoday/special_namibia.rds")
-
-saveRDS(object = both_significant, file = "shiny_demoday/both_significant.rds")
-
-saveRDS(object = both_not_significant, file = "shiny_demoday/both_not_significant.rds")
-```
-
-```{r}
-yes <- complete_data_untrimmed %>% 
-  filter(Metric == "Domestic general government health expenditure per capita (current US$)") %>% 
-  mutate(SAP = as.integer(ifelse(Year > 2009, 1, 0)))
-
- yes %>% 
-      ggplot(aes(x = SAP, y = Value, color = SAP)) +
-      geom_jitter() +
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Current health expenditure (WHO) per capita in US$") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
       geom_smooth(method = "lm", se = FALSE) +
       facet_wrap(~ Country) +
-      labs(title = "Domestic general government health expenditure per capita (current US$)",
-           y = "In Current US$",
+      labs(title = "Current health expenditure per capita",
+           y = "US$",
            color = "Structural Adjustment Program")
- 
- summary(glm(Value ~ SAP, data = yes, family = "binomial"))
+```
+
+```{r reg_gov_health_expend_percent}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#Domestic general government health expenditure (% of general government expenditure)			
+reg_gov_health_expend_percent <- significant_regression[17, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_gov_health_expend_percent) %>% 
+   tab_header(title = "Domestic general government health expenditure (% of general government expenditure)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Domestic general government health expenditure (% of general government expenditure)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Domestic general government health expenditure",
+           y = "Percent of general government expenditure",
+           color = "Structural Adjustment Program")
+```
+
+```{r reg_gov_health_expend_percap}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#Domestic general government health expenditure (GGHE-D) per capita in US$ (WHO)	
+reg_gov_health_expend_percap <- significant_regression[18, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_gov_health_expend_percap) %>% 
+   tab_header(title = "Domestic general government health expenditure per capita in US$") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Domestic general government health expenditure (GGHE-D) per capita in US$ (WHO)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Domestic general government health expenditure per capita",
+           y = "US$",
+           color = "Structural Adjustment Program")
+```
+
+```{r reg_private_health_expend_percap}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#Domestic private health expenditure per capita (current US$) (World Bank)	
+reg_private_health_expend_percap <- significant_regression[20, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_private_health_expend_percap) %>% 
+   tab_header(title = "Domestic private health expenditure per capita (current US$)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Domestic private health expenditure per capita (current US$) (World Bank)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Domestic private health expenditure per capita",
+           y = "Current US$",
+           color = "Structural Adjustment Program")
 ```
 
 
-```{r}
-#all work here and below is scratch work
+```{r reg_gdp}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
 
-angola_regression <- complete_data_untrimmed %>%
-  filter(Country == "Angola") %>% 
-  mutate(SAP = ifelse(SAP == "Has received IMF money", 1, 0)) %>% 
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(models = map(data, ~lm(Value ~ SAP, data = .x))) %>% 
-  mutate(coefs = map(models, ~coef(.x))) %>%
-  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
-  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
-  mutate(glance = map(models, ~glance(.x))) %>%
-  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
-  mutate(Country = 1)
+#GDP (constant 2010 US$)
+reg_gdp <- significant_regression[21, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_gdp) %>% 
+   tab_header(title = "GDP (constant 2010 US$)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "GDP (constant 2010 US$)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "GDP",
+           y = "Constant 2010 US$",
+           color = "Structural Adjustment Program")
 ```
 
-```{r}
-namibia_regression <- complete_data_untrimmed %>%
-  filter(Country == "Namibia") %>% 
-  mutate(SAP = ifelse(SAP == "Angola has received IMF money", 1, 0)) %>% 
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(models = map(data, ~lm(Value ~ SAP, data = .x))) %>% 
-  mutate(coefs = map(models, ~coef(.x))) %>%
-  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
-  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
-  mutate(glance = map(models, ~glance(.x))) %>%
-  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
-  mutate(Country = 0)
+
+```{r reg_gdp_growth}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#GDP growth (annual %)
+reg_gdp_growth <- significant_regression[22, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_gdp_growth) %>% 
+   tab_header(title = "GDP growth (Annual Percent)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "GDP growth (annual %)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "GDP growth",
+           y = "Annual Percent",
+           color = "Structural Adjustment Program")
 ```
 
-```{r}
-regression <- complete_data_untrimmed %>% 
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(anova = map(data, ~aov(Value ~ SAP, data = .x))) %>% 
-  mutate(glance = map(anova, ~glance(.x))) 
 
-%>%
-  mutate(p-value = map_dbl(glance, ~pluck(.x, "Pr(>F)1")))
+```{r reg_gdp_percap}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#GDP per capita (constant 2010 US$)	
+reg_gdp_percap <- significant_regression[23, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_gdp_percap) %>% 
+   tab_header(title = "GDP per capita (constant 2010 US$)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "GDP per capita (constant 2010 US$)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "GDP per capita",
+           y = "Constant 2010 US$",
+           color = "Structural Adjustment Program")
 ```
 
-```{r}
-regression <- rbind(angola_regression, namibia_regression)
 
-library(dotwhisker)
+```{r reg_gdp_percap_growth}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
 
-regression <- complete_data_untrimmed %>%
-  filter(Year > 2009) %>%
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(anova = map(data, ~Anova(lm(Value ~ Country, data = .x), type = "II")))
+#GDP per capita growth (annual %)
+reg_gdp_percap_growth <- significant_regression[24, 3] %>% 
+  unnest()
 
-%>% 
-  mutate(anova = anova(lm, type = "II"))
+#I bolded the SAP coefficient 
+gt(reg_gdp_percap_growth) %>% 
+   tab_header(title = "GDP per capita growth (annual %)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
 
-  filter(anova_p_value < .05)
-
-
-%>% 
-  mutate(anova_p_value = as.numeric(anova_p_value)) %>% 
-  select(Metric, anova_p_value) 
-
-
-
-
-  
-
-
-
-
-regression_namibia <- complete_data_untrimmed %>%
-  filter(Country == "Namibia") %>% 
-  group_by(Metric) %>%
-  nest() %>% 
-  mutate(anova = map(data, ~anova(lm(Value ~ SAP, data = .x))$"Pr(>F)"[1])) 
-
-
-library(dotwhisker)
-
-yes <- complete_data_untrimmed %>% 
-  filter(Year > 2009) %>%
-  filter(Country == "Angola") %>% 
-  filter(Metric == "Domestic general government health expenditure per capita (current US$)")
-
-yes <- lm(Value ~ Year, yes)
-
-dwplot(yes)
-
-yes <- tidy(yes, conf.int = TRUE)
-
-ggplot(yes, aes(term, estimate))+
-  geom_point()+
-  geom_pointrange(aes(ymin = conf.low, ymax = conf.high))+
-  labs(title = "Coefficients of a linear regression model")
-
-aov(Value ~ SAP, data = yes)
-
-unlist(summary(aov(Value ~ SAP, data = yes)))
-
-
-%>% 
-  mutate(coefs = map(models, ~coef(.x))) %>%
-  mutate(intercept = map_dbl(coefs, ~pluck(.x, "(Intercept)"))) %>%
-  mutate(slope = map_dbl(coefs, ~pluck(.x, "SAP"))) %>%
-  mutate(glance = map(models, ~glance(.x))) %>%
-  mutate(r_squared = map_dbl(glance, ~pluck(.x, "r.squared"))) %>% 
-  mutate(Country = "Namibia")
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "GDP per capita growth (annual %)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "GDP per capita growth",
+           y = "Annual Percent",
+           color = "Structural Adjustment Program")
 ```
 
-```{r}
 
+```{r reg_gni}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#GNI (constant 2010 US$)	
+reg_gni <- significant_regression[25, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_gni) %>% 
+   tab_header(title = "GNI (constant 2010 US$)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            ))
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "GNI (constant 2010 US$)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "GNI",
+           y = "Constant 2010 US$",
+           color = "Structural Adjustment Program")
 ```
 
+
+```{r reg_tax}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#Taxes on income, profits and capital gains (% of revenue)	
+reg_tax <- significant_regression[52, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_tax) %>% 
+   tab_header(title = "Taxes on income, profits and capital gains (% of revenue)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            )) 
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Taxes on income, profits and capital gains (% of revenue)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Taxes on income, profits and capital gains",
+           y = "Percent of Revenue",
+           color = "Structural Adjustment Program")
+```
+
+
+```{r reg_pocket_percent}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#Out-of-pocket expenditure (% of current health expenditure)	
+reg_pocket_percent <- significant_regression[45, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_pocket_percent) %>% 
+   tab_header(title = "Out-of-pocket expenditure (% of current health expenditure)") %>% 
+  cols_label(term = "",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            )) 
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Out-of-pocket expenditure (% of current health expenditure)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Out-of-pocket expenditure",
+           y = "Percent of current health expenditure",
+           color = "Structural Adjustment Program")
+```
+
+
+```{r reg_pocket_percap}
+#Here I pulled certain important metrics and created the proper tables for them all as well as graphs to show in my shiny app. I will pull over the code.
+
+#Out-of-pocket expenditure per capita (current US$) (World Bank)	
+reg_pocket_percap <- significant_regression[47, 3] %>% 
+  unnest()
+
+#I bolded the SAP coefficient 
+gt(reg_pocket_percap) %>% 
+   tab_header(title = "Out-of-pocket expenditure per capita (current US$)") %>% 
+  cols_label(
+    term = " ",
+    estimate = "Coefficient",
+    std.error = "Standard Error",
+    statistic = "Statistic",
+    p.value = "P Value") %>% 
+  tab_style(style = cell_text(weight = "bold"),
+            locations = cells_data(
+              columns = vars(estimate),
+              rows = 3
+            )) 
+
+#plot just like the shiny drop down
+complete_data %>% 
+      filter(Metric == "Out-of-pocket expenditure per capita (current US$) (World Bank)") %>% 
+      ggplot(aes(x = Year, y = Value, color = SAP)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE) +
+      facet_wrap(~ Country) +
+      labs(title = "Out-of-pocket expenditure per capita",
+           y = "Current US$",
+           color = "Structural Adjustment Program")
+```
 

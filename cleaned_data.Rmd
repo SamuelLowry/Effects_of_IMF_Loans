@@ -11,6 +11,8 @@ library(tidyverse)
 ```
 
 ```{r}
+#You must run both the angola and namibia rmds completely before this one. 
+
 #I took the data compiled from the namibia and the angola rmds and gave them additional columns. One is country and the other specifies whether or not the year is one where Angola received IMF funding yet.
 
 namibia_data <- namibia_data %>% 
@@ -47,8 +49,45 @@ names(complete_namibia_untrimmed) <- c("Metric", "Year", "Value", "Country", "SA
 
 complete_data_untrimmed <- rbind(complete_angola_untrimmed, complete_namibia_untrimmed)
 
-saveRDS(object = complete_data_untrimmed, file = "shiny_roughdraft/complete_data_untrimmed.rds")
 ```
+
+```{r}
+#Here I was able to do some mor eprep pf the data for regression by creating some binaries. In addition, I had to get rid of wonky data that had all zeros for one country or another which would mess up the regression.
+
+explore <- complete_data_untrimmed %>% 
+  mutate(SAP = case_when(Country == "Namibia" ~ 0, 
+                         Country == "Angola" & Year > 2009 ~ 1,
+                         TRUE ~ 0)) %>% 
+  mutate(Country = ifelse(Country == "Angola", 1, 0)) %>% 
+  filter(Value == 0) %>% 
+  group_by(Metric) %>% 
+  summarize(sum(Country)/n(),
+            n())
+
+#After exploring the data to get rid of the weird zero stuff I made the formal new dataset without them with binaries for regression. 
+
+complete_data_untrimmed_binary <- complete_data_untrimmed %>% 
+  mutate(SAP = case_when(Country == "Namibia" ~ 0, 
+                         Country == "Angola" & Year > 2009 ~ 1,
+                         TRUE ~ 0)) %>% 
+  mutate(Country = ifelse(Country == "Angola", 1, 0)) %>%
+  subset(Metric != "Coal rents (% of GDP)" 
+         & Metric != "Electricity production from natural gas sources (% of total)"
+         & Metric != "Electricity production from renewable sources, excluding hydroelectric (% of total)"
+         & Metric != "Electricity production from renewable sources, excluding hydroelectric (kWh)"
+         & Metric != "Electricity production from coal sources (% of total)"
+         & Metric != "Adjusted savings: energy depletion (% of GNI)"
+         & Metric != "Adjusted savings: energy depletion (current US$)"
+         & Metric != "Adjusted savings: mineral depletion (% of GNI)"
+         & Metric != "Adjusted savings: mineral depletion (current US$)"
+         & Metric != "Adjusted savings: net forest depletion (% of GNI)"
+         & Metric != "Adjusted savings: net forest depletion (current US$)"
+         & Metric != "Medium and high-tech exports (% manufactured exports)"
+         & Metric != "Mineral rents (% of GDP)"
+         & Metric != "Natural gas rents (% of GDP)"
+         & Metric != "Oil rents (% of GDP)")
+```
+
 
 ```{r}
 # After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/ . I then went through the data and deleted all that was not needed for my project. This will have to change based upon your filepath!
@@ -93,16 +132,38 @@ names(complete_namibia) <- c("Metric", "Year", "Value", "Country", "SAP")
 ```{r}
 # I then bound the two together in order to have a central, gapminder-like dataframe. 
 
-complete_data <- rbind(complete_angola, complete_namibia)
+complete_data <- rbind(complete_angola, complete_namibia) 
 
-saveRDS(object = complete_data,file = "shiny_roughdraft/complete_data.rds")
+#Here I gave the trimmed data the same treatment as the untrimmed above to prep it for regression. 
+
+complete_data_binary <- complete_data %>% 
+  mutate(SAP = case_when(Country == "Namibia" ~ 0, 
+                         Country == "Angola" & Year > 2009 ~ 1,
+                         TRUE ~ 0)) %>% 
+  mutate(Country = ifelse(Country == "Angola", 1, 0)) %>%
+  subset(Metric != "Coal rents (% of GDP)" 
+         & Metric != "Electricity production from natural gas sources (% of total)"
+         & Metric != "Electricity production from renewable sources, excluding hydroelectric (% of total)"
+         & Metric != "Electricity production from renewable sources, excluding hydroelectric (kWh)"
+         & Metric != "Electricity production from coal sources (% of total)"
+         & Metric != "Adjusted savings: energy depletion (% of GNI)"
+         & Metric != "Adjusted savings: energy depletion (current US$)"
+         & Metric != "Adjusted savings: mineral depletion (% of GNI)"
+         & Metric != "Adjusted savings: mineral depletion (current US$)"
+         & Metric != "Adjusted savings: net forest depletion (% of GNI)"
+         & Metric != "Adjusted savings: net forest depletion (current US$)"
+         & Metric != "Medium and high-tech exports (% manufactured exports)"
+         & Metric != "Mineral rents (% of GDP)"
+         & Metric != "Natural gas rents (% of GDP)"
+         & Metric != "Oil rents (% of GDP)")
+
+#saved the data that is needed for my work in shiny. 
+
+saveRDS(object = complete_data,file = "shiny_demoday/complete_data.rds")
+
+saveRDS(object = complete_data_binary,file = "shiny_demoday/complete_data_binary.rds")
 ```
 
-```{r workable data}
-#I then changed the groups of metrics into the columns. I added a column on where namibia was recieving an IMF loan or not. Information on that found here: https://www.imf.org/external/np/fin/tad/extarr2.aspx?memberKey1=23&date1key=2019-10-31
-
-namibia_data_flipped <- acast(namibia_data, year ~ metric) 
-```
 
 
 
