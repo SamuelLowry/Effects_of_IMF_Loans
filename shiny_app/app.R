@@ -39,8 +39,12 @@ ui <- navbarPage(theme = shinytheme("united"), "Effects of IMF Structural Adjust
                               
                               mainPanel(
                                 plotOutput("dropdown")))),
-                   tabPanel("Background Information",
+                 
+                     tabPanel("Background Information",
                             titlePanel("Background Information"),
+                            
+                          # Pulled code from here in order to input my youtube video https://www.youtube.com/watch?v=Ka2pWqXS1WA
+                              HTML('<iframe width="560" height="315" src="https://www.youtube.com/embed/pEhlsKPh7C4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'),
                             p("Since its conception in 1944, the International Monetary Fund (IMF) has provided structural adjustment loans to developing countries conditional upon their adoption of neoliberal economic policies (Keshavjee, 2014). While such policies aim to stabilize the economies of recipient countries, they also require a decrease in government spending forcing public healthcare programs to contract (Stuckler, 2008). While literature exists on this phenomenon, there is little written on healthcare spending specifically. Thus I performed a multivariate regression on Angola which began receiving IMF loans in late 2009 by comparing it to the neighboring country of Namibia which has never received IMF loans (Press Release, 2009). I aim to analyze and contextualize, the IMF, the effects of its structural adjustment loans, and specifically their effect on Angola all through a biosocial approach in order to best depict their ill effects."),
                             p("The IMF was created in July of 1944 at the United Nations Monetary and Financial Conference held in Bretton Wood, New Hampshire. The conference drew, “together 730 delegates from 44 nations. . . . men of power from government, academia, and large financial institutions” (Keshavjee, 2014, p. 85). The delegates’ goal was to develop an agreement that fostered Europe’s post-WWII recovery. Out of their discussions came the Bretton Woods Agreement which created, “the International Stabilization Fund (which later became the International Monetary Fund, IMF) and the International Bank for Reconstruction and Development (IBRD)” (Keshavjee, 2014, p. 85- 86)."),
                             p("The agreement’s final form was predicated upon ideals of neoliberalism, but at the conferences there was great discussion: “British economist John Maynard Keynes. . . argued that totally free markets were not ideal: sometimes the market failed to properly allocate resources, which could be corrected through appropriate intervention by the state” (Keshavjee, 2014, p. 86). On the other hand, Friedrich von Hayek and Milton Friedman, “called for laissez-faire economics, free trade, and the repeal of restrictive trade laws,” what we now think of as neoliberal economics (Keshavjee, 2014, p. 87). Ultimately, the Hayeks and Friedmans won out, and the IMF was in turn founded upon their laissez-faire beliefs."),
@@ -107,7 +111,7 @@ ui <- navbarPage(theme = shinytheme("united"), "Effects of IMF Structural Adjust
 
 # Define the server
 
-server <- function(input, output) {
+server <- function(input, output, session) {
 
   #specified reactive drop down based on metric
   
