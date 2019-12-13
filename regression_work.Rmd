@@ -14,7 +14,7 @@ library(gt)
 library(tidyverse)
 ```
 
-```{r}
+```{r regression}
 #Run cleaned data rmd before this! And then namibia and angola data cleaning rmds before that!
 
 #Using the complete binary data that had been trimmed from the cleaned_data.rmd in order to run a regression in order to find the effect of the IMF loans while adjusting for country and year. 
@@ -31,7 +31,7 @@ regression <- complete_data_binary %>%
   mutate(p_value = as.numeric(p_value))
 ```
 
-```{r}
+```{r sig}
 #I shrunk the dataset down to only metrics that were statistically significant. 
 
 significant_regression <- regression %>% 
@@ -40,7 +40,7 @@ significant_regression <- regression %>%
 
 #I saved them to this RDS for work in my shiny app.
 
-saveRDS(object = significant_regression,file = "shiny_demoday/significant_regression.rds")
+saveRDS(object = significant_regression,file = "shiny_app/significant_regression.rds")
 ```
 
 ```{r reg_health_expend_percap}

@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-```{r}
+```{r countries}
 #You must run both the angola and namibia rmds completely before this one. 
 
 #I took the data compiled from the namibia and the angola rmds and gave them additional columns. One is country and the other specifies whether or not the year is one where Angola received IMF funding yet.
@@ -24,13 +24,13 @@ angola_data <- angola_data %>%
   mutate(SAP = ifelse(year > 2009, "Has received IMF money", "Has not received IMF money"))
 ```
 
-```{r}
+```{r combined}
 # I then joined the two together with inner_join to delete all times where they did not match up. 
 combined <- inner_join(angola_data, namibia_data, by = c("metric", "year")) %>% 
   arrange(metric) 
 ```
 
-```{r}
+```{r labels}
 # I then trimmed the combined data into their two respective countries and gave them proper labels. 
 
 complete_angola_untrimmed <- combined %>% 
@@ -44,14 +44,14 @@ complete_namibia_untrimmed <- combined %>%
 names(complete_namibia_untrimmed) <- c("Metric", "Year", "Value", "Country", "SAP")
 ```
 
-```{r}
+```{r bind}
 # I then bound the two together in order to have a central, gapminder-like dataframe. 
 
 complete_data_untrimmed <- rbind(complete_angola_untrimmed, complete_namibia_untrimmed)
 
 ```
 
-```{r}
+```{r explore}
 #Here I was able to do some mor eprep pf the data for regression by creating some binaries. In addition, I had to get rid of wonky data that had all zeros for one country or another which would mess up the regression.
 
 explore <- complete_data_untrimmed %>% 
@@ -89,15 +89,15 @@ complete_data_untrimmed_binary <- complete_data_untrimmed %>%
 ```
 
 
-```{r}
+```{r download}
 # After trying to figure out how to get rid of all the needless data in r I resolved that since I am gonna have to read through it all manually, it would be fine to do it in excel, so I used this link to export it! https://datatofish.com/export-dataframe-to-csv-in-r/ . I then went through the data and deleted all that was not needed for my project. This will have to change based upon your filepath!
 
 
-write.csv(combined,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/gov_1005_final_project/combined_data/combined_untrimmed.csv", 
+write.csv(combined,"/Users/samlowry/iCloud Drive (Archive) - 1/Documents/rstudio/Effects_of_IMF_Loans/combined_data/combined_untrimmed.csv", 
           row.names = TRUE)
 ```
 
-```{r}
+```{r cleaned}
 # I then took the newly cleaned data and put it back into r. After downloading it as a csv and then putting it into the combined_data folder with combined_trimmed as the name. 
 
 combined_trimmed <- read_csv("combined_data/combined_trimmed.csv", col_types = 
@@ -113,7 +113,7 @@ combined_trimmed <- read_csv("combined_data/combined_trimmed.csv", col_types =
                               )) 
 ```
 
-```{r}
+```{r trim_combined}
 # I then trimmed the combined data into their two respective countries and gave them proper labels. I also changed the years because the 2010 Angola budget was the first one created with IMF loans as the loans took effect in late 2009. 
 
 complete_angola <- combined_trimmed %>% 
@@ -129,7 +129,7 @@ complete_namibia <- combined_trimmed %>%
 names(complete_namibia) <- c("Metric", "Year", "Value", "Country", "SAP")
 ```
 
-```{r}
+```{r bind_trimmed}
 # I then bound the two together in order to have a central, gapminder-like dataframe. 
 
 complete_data <- rbind(complete_angola, complete_namibia) 
@@ -159,9 +159,9 @@ complete_data_binary <- complete_data %>%
 
 #saved the data that is needed for my work in shiny. 
 
-saveRDS(object = complete_data,file = "shiny_demoday/complete_data.rds")
+saveRDS(object = complete_data,file = "shiny_app/complete_data.rds")
 
-saveRDS(object = complete_data_binary,file = "shiny_demoday/complete_data_binary.rds")
+saveRDS(object = complete_data_binary,file = "shiny_app/complete_data_binary.rds")
 ```
 
 
